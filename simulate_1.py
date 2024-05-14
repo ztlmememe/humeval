@@ -441,9 +441,12 @@ def simulate_score(
                 count_num += 1
             
             # 调用 rate 函数处理评分数据
-            end,df_save = rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id, video_url_1, video_url_2, model_1, model_2, batch_rating, count_num)
+                end,df_save = rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id, video_url_1, video_url_2, model_1, model_2, batch_rating, count_num)
+                if end:
+                    break
+                
             if end:
-                break
+                    break
         
         if len(combinations_now) == 2000:
             break
