@@ -425,10 +425,23 @@ def simulate_score(
             # 打印查找到的评分信息
             # print(ratings)
 
-            count_num += 1
+            num_batches = len(ratings) // 6
+
+            # 对ratings中的每个六行批次进行迭代
+            for j in range(num_batches):
+                # 计算当前批次的索引范围
+                start_index = j * 6
+                end_index = start_index + 6
+                
+                # 使用iloc获取从start_index到end_index的六行数据
+                batch_rating = ratings.iloc[start_index:end_index]
+                # print(batch_rating)
+                
+
+                count_num += 1
             
             # 调用 rate 函数处理评分数据
-            end,df_save = rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id, video_url_1, video_url_2, model_1, model_2, ratings, count_num)
+            end,df_save = rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id, video_url_1, video_url_2, model_1, model_2, batch_rating, count_num)
             if end:
                 break
         
@@ -459,7 +472,7 @@ def simulate_score(
 
         dimension_dfs[dimension] = scores_rk
 
-        print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
+        # print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
 
     return df_save, dimension_dfs
 
@@ -468,49 +481,20 @@ def simulate_score(
 import time
 
 
-def simulate_all(
-    # path_csv_per_person = r'/mnt/workspace/ztl/NIPS/amt/processed/batch100',
-    #                 csv_videos = r'videos_all_with_result.csv',
-    #                 path_csv_save = r'/cpfs01/shared/public/ztl/NIPS/humeval/simulate_amt/',
-                    df_inputs,df_videos,begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate =0.3):
+def simulate_all(df_inputs,df_videos,begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate =0.3):
 
 
     i = 0
-    # timestamp = time.time()
-    # folder_path = os.path.join(path_csv_save,str(timestamp))
-
-    # if not os.path.exists(folder_path ):
-    #     os.makedirs(folder_path)
-        # print("Folder created")
 
     dfs = []
 
-    # for file in os.listdir(path_csv_per_person):
     for df_input  in df_inputs:
-        # if file.endswith(".csv"):
-            
-            # csv_per_person = os.path.join(path_csv_per_person, file)
-            # file_names = f'{i}_{begain_count}_{groups_per_batch}_{M}_{N}_{decay_rate}.csv'
-            # csv_save = os.path.join(path_csv_save,str(timestamp), file_names)
 
-            # df_input  = pd.read_csv(csv_videos)
+        df_save, dimension_dfs = simulate_score(df_input,df_videos,begain_count,groups_per_batch,M,N,decay_rate)
 
-            # df_input['image_url'].fillna(0, inplace=True)
-            
+        dfs.append(df_save)
 
-            df_save, dimension_dfs = simulate_score(df_input,df_videos,begain_count,groups_per_batch,M,N,decay_rate)
-
-            dfs.append(df_save)
-
-            i += 1
-
-    # 读取所有CSV文件并将它们合并成一个DataFrame
-    
-    # for file_name in os.listdir(folder_path):
-    #     if file_name.endswith('.csv'):
-    #         file_path = os.path.join(folder_path, file_name)
-    #         df = pd.read_csv(file_path)
-    #         dfs.append(df)
+        i += 1
 
     # 合并DataFrame
     df = pd.concat(dfs, ignore_index=True)
@@ -524,20 +508,11 @@ def simulate_all(
 
         comparisons = group_df[['pairs_id', 'model_1', 'model_2', 'rating']].reset_index(drop=True)
 
-
         scores_rk = fit_models(comparisons)
 
-
-        # 获取排名
-        # rankings_bt = rank_models(scores_bt)
         rankings_rk = rank_models(scores_rk)
 
         dimension_dfs[dimension] = scores_rk
-
-
-        # 打印结果
-        # print(f"Dimension{dimension}: Bradley-Terry Model Rankings:", rankings_bt)
-        # print(f"Dimension{dimension}: Rao and Kupper Model scores:", scores_rk)
 
         print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
 
