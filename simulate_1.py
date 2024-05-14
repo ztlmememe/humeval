@@ -141,7 +141,7 @@ def calculate_naive_scores(comparisons):
     
     return scores
 
-# submit_result(pairs_id,video_url_1,video_url_2, model_1,model_2,ratings)
+
 def submit_result(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id,video_url_1,video_url_2, model_1,model_2,ratings):
 
 
@@ -237,7 +237,7 @@ def get_videos(update_count,comparisons_by_dimension,all_combinations, count, be
 
         # 检查当前组索引是否超出范围，如果超出则重置
         if current_group_index >= total_groups:
-            return []
+            return [],current_group_index
         
         # 获取当前批次的视频对
         start_index = current_group_index * size_of_group
@@ -277,33 +277,15 @@ def rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_s
                 
     df_save,down = submit_result(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id,video_url_1,video_url_2, model_1,model_2,ratings)
 
-    if down:
-
-        print('The video evaluation is complete',f'completed_pairs {count_num}')
+    if down :
 
         return True,df_save
     else:
         # print('Rating received successfully')
         return False,df_save
 
-def simulate_score(
-    # csv_per_person = r'/cpfs01/shared/public/ztl/NIPS/amt/processed/batch99/data_for_0.csv',
-    #                 csv_videos = r'videos_all_with_result.csv',
-    #                 csv_save = r'videos_all_with_result.csv',
-                    df_input = None,df_videos= None,
-                    begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate = 0.3):
-
-
-    # parser = argparse.ArgumentParser(description='Example of a script that accepts hyperparameters.')
-    # parser.add_argument('--begain_count', type=int, default=200)
-    # parser.add_argument('--groups_per_batch', type=int, default=10) # 每一个BETCH过groups_per_batch*10个评分数据
-    # parser.add_argument('--M', type=int, default=5) # 过M个BATCH更新一次模型强度
-    # parser.add_argument('--N', type=int, default=5) # N次检查排名稳定后停止一个维度下的打分
-    # parser.add_argument('--decay_rate', type=float, default=0.1)
-    # parser.add_argument('--num', type=int, default=0) # 模拟第几个人,0-4 100 18:08开始
-
-
-    # args = parser.parse_args()
+def simulate_score(df_input = None,df_videos= None,
+                    begain_count = 200 ,groups_per_batch =7 ,M =5 ,N =5 ,decay_rate = 0.3):
 
     # 创建空的DataFrame
     df_save = pd.DataFrame(columns=['pairs_id', 'model_1', 'model_2', 'video_url_1', 'video_url_2', 'dimension', 'rating'])
@@ -459,7 +441,7 @@ def simulate_score(
         if end:
             break
                 
-
+    print('The video evaluation is complete',f'completed_pairs {count_num}')       
     dimension_dfs = {}
     
     # 根据dimension分组并提取所需列
