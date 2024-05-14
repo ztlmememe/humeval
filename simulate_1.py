@@ -202,7 +202,7 @@ def submit_result(update_count,comparisons_by_dimension, count, rank_per_dimensi
                 if all(rank == last_five_rankings[0] for rank in last_five_rankings):
                     eval_status_per_dimension[dimension] = True  # 标记该维度评测完成
 
-                    print(f"Dimension {dimension} evaluation completed.")
+                    # print(f"Dimension {dimension} evaluation completed.")
                     final_ranking[dimension] = last_five_rankings[0]  # 存储最终排名
                     final_score[dimension] = scores
                     # rank_per_dimension[dimension].clear()  # 清空历史数据，为下一轮评测准备
@@ -286,10 +286,12 @@ def rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_s
         # print('Rating received successfully')
         return False,df_save
 
-def simulate_score(csv_per_person = r'/cpfs01/shared/public/ztl/NIPS/amt/processed/batch99/data_for_0.csv',
-                    csv_videos = r'videos_all_with_result.csv',
-                    csv_save = r'videos_all_with_result.csv',
-                    begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =1 ,decay_rate =0.3):
+def simulate_score(
+    # csv_per_person = r'/cpfs01/shared/public/ztl/NIPS/amt/processed/batch99/data_for_0.csv',
+    #                 csv_videos = r'videos_all_with_result.csv',
+    #                 csv_save = r'videos_all_with_result.csv',
+                    df_input = None,df_videos= None,
+                    begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate = 0.3):
 
 
     # parser = argparse.ArgumentParser(description='Example of a script that accepts hyperparameters.')
@@ -298,7 +300,7 @@ def simulate_score(csv_per_person = r'/cpfs01/shared/public/ztl/NIPS/amt/process
     # parser.add_argument('--M', type=int, default=5) # 过M个BATCH更新一次模型强度
     # parser.add_argument('--N', type=int, default=5) # N次检查排名稳定后停止一个维度下的打分
     # parser.add_argument('--decay_rate', type=float, default=0.1)
-    # parser.add_argument('--num', type=int, default=0) # 模拟第几个人,0-4
+    # parser.add_argument('--num', type=int, default=0) # 模拟第几个人,0-4 100 18:08开始
 
 
     # args = parser.parse_args()
@@ -306,11 +308,6 @@ def simulate_score(csv_per_person = r'/cpfs01/shared/public/ztl/NIPS/amt/process
     # 创建空的DataFrame
     df_save = pd.DataFrame(columns=['pairs_id', 'model_1', 'model_2', 'video_url_1', 'video_url_2', 'dimension', 'rating'])
 
-    
-
-    df  = pd.read_csv(csv_videos)
-
-    df['image_url'].fillna(0, inplace=True)
 
     ratings = []
 
@@ -391,17 +388,20 @@ def simulate_score(csv_per_person = r'/cpfs01/shared/public/ztl/NIPS/amt/process
                     all_combinations.append(combo_videos.to_dict('records'))
 
 
-    print(len(all_combinations))
+    # print(len(all_combinations))
 
     final_ranking = {i: {} for i in range(1, 7)}  # 存储最终排名
     final_score = {i: {} for i in range(1, 7)}  # 存储最终排名
     # 读取结果数据
-    result_df = pd.read_csv(csv_per_person)
+    result_df = df_input
+
+
+
     end = False
     count_num = 0
     while True:
         combinations_now = get_videos(update_count,comparisons_by_dimension,all_combinations, count, begain_count,eval_status_per_dimension, model_strengths_per_dimension, current_group_index, groups_per_batch,decay_rate)
-        print(f'combinations_now {len(combinations_now)}')
+        # print(f'combinations_now {len(combinations_now)}')
 
         # 如果获取的视频对列表为空，结束循环
         if len(combinations_now) == 0:
@@ -441,57 +441,76 @@ def simulate_score(csv_per_person = r'/cpfs01/shared/public/ztl/NIPS/amt/process
             break
                 
 
+    dimension_dfs = {}
+    
+    # 根据dimension分组并提取所需列
+    for dimension, group_df in df_save.groupby('dimension'):
+        # print(dimension)
 
-    # print(count_num)
-    # print("The final ranking is:")
-    # # 打印最终排名
-    # print(final_ranking)
+        comparisons = group_df[['pairs_id', 'model_1', 'model_2', 'rating']].reset_index(drop=True)
 
-    df_save.to_csv(csv_save, index=False)
+
+        scores_rk = fit_models(comparisons)
+
+
+        # 获取排名
+        # rankings_bt = rank_models(scores_bt)
+        rankings_rk = rank_models(scores_rk)
+
+        dimension_dfs[dimension] = scores_rk
+
+        print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
+
+    return df_save, dimension_dfs
+
 
 
 import time
 
 
-def simulate_all(path_csv_per_person = r'/mnt/workspace/ztl/NIPS/amt/processed/batch100',
-                    csv_videos = r'videos_all_with_result.csv',
-                    path_csv_save = r'/cpfs01/shared/public/ztl/NIPS/humeval/simulate_amt/',
-                    begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate =0.3):
-
-
-
-    # def simulate_score(csv_per_person = r'/cpfs01/shared/public/ztl/NIPS/amt/processed/batch99/data_for_0.csv',
+def simulate_all(
+    # path_csv_per_person = r'/mnt/workspace/ztl/NIPS/amt/processed/batch100',
     #                 csv_videos = r'videos_all_with_result.csv',
-    #                 csv_save = r'videos_all_with_result.csv',
-    #                 begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate =0.3)
+    #                 path_csv_save = r'/cpfs01/shared/public/ztl/NIPS/humeval/simulate_amt/',
+                    df_inputs,df_videos,begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate =0.3):
+
 
     i = 0
-    timestamp = time.time()
-    folder_path = os.path.join(path_csv_save,str(timestamp))
+    # timestamp = time.time()
+    # folder_path = os.path.join(path_csv_save,str(timestamp))
 
-    if not os.path.exists(folder_path ):
-        os.makedirs(folder_path)
+    # if not os.path.exists(folder_path ):
+    #     os.makedirs(folder_path)
         # print("Folder created")
 
-    for file in os.listdir(path_csv_per_person):
-        
-        if file.endswith(".csv"):
-            
-            csv_per_person = os.path.join(path_csv_per_person, file)
-            file_names = f'{i}_{begain_count}_{groups_per_batch}_{M}_{N}_{decay_rate}.csv'
-            csv_save = os.path.join(path_csv_save,str(timestamp), file_names)
+    dfs = []
 
-            simulate_score(csv_per_person,csv_videos,csv_save,begain_count,groups_per_batch,M,N,decay_rate)
+    # for file in os.listdir(path_csv_per_person):
+    for df_input  in df_inputs:
+        # if file.endswith(".csv"):
+            
+            # csv_per_person = os.path.join(path_csv_per_person, file)
+            # file_names = f'{i}_{begain_count}_{groups_per_batch}_{M}_{N}_{decay_rate}.csv'
+            # csv_save = os.path.join(path_csv_save,str(timestamp), file_names)
+
+            # df_input  = pd.read_csv(csv_videos)
+
+            # df_input['image_url'].fillna(0, inplace=True)
+            
+
+            df_save, dimension_dfs = simulate_score(df_input,df_videos,begain_count,groups_per_batch,M,N,decay_rate)
+
+            dfs.append(df_save)
 
             i += 1
 
     # 读取所有CSV文件并将它们合并成一个DataFrame
-    dfs = []
-    for file_name in os.listdir(folder_path):
-        if file_name.endswith('.csv'):
-            file_path = os.path.join(folder_path, file_name)
-            df = pd.read_csv(file_path)
-            dfs.append(df)
+    
+    # for file_name in os.listdir(folder_path):
+    #     if file_name.endswith('.csv'):
+    #         file_path = os.path.join(folder_path, file_name)
+    #         df = pd.read_csv(file_path)
+    #         dfs.append(df)
 
     # 合并DataFrame
     df = pd.concat(dfs, ignore_index=True)
@@ -511,7 +530,7 @@ def simulate_all(path_csv_per_person = r'/mnt/workspace/ztl/NIPS/amt/processed/b
 
         # 获取排名
         # rankings_bt = rank_models(scores_bt)
-        # rankings_rk = rank_models(scores_rk)
+        rankings_rk = rank_models(scores_rk)
 
         dimension_dfs[dimension] = scores_rk
 
@@ -520,7 +539,7 @@ def simulate_all(path_csv_per_person = r'/mnt/workspace/ztl/NIPS/amt/processed/b
         # print(f"Dimension{dimension}: Bradley-Terry Model Rankings:", rankings_bt)
         # print(f"Dimension{dimension}: Rao and Kupper Model scores:", scores_rk)
 
-        # print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
+        print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
 
     return dimension_dfs
 
