@@ -312,13 +312,13 @@ def simulate_score(
     ratings = []
 
     # 初始化模型强度
-    model_strengths = {model: [1]*6 for model in df['models'].unique()}
+    model_strengths = {model: [1]*6 for model in df_videos['models'].unique()}
     all_combinations = []  # 存储所有可能的组合
     # 存储比赛结果的全局变量，针对每个维度
     comparisons_by_dimension = {i: pd.DataFrame(columns=['model_1', 'model_2', 'rating']) for i in range(1, 7)}
 
     rank_per_dimension = {i: deque(maxlen=6) for i in range(1, 7)}  # 维度从1到6，保留最新的六个排名，方便进行比较
-    model_strengths_per_dimension = {i: {model: 1 for model in df['models'].unique()} for i in range(1, 7)}
+    model_strengths_per_dimension = {i: {model: 1 for model in df_videos['models'].unique()} for i in range(1, 7)}
 
     count = {i: 0 for i in range(1, 7)}  # 用于跟踪每个维度的数据计数
 
@@ -340,10 +340,10 @@ def simulate_score(
         score_columns = ['subject_consistency', 'temporal_flickering', 'motion_smoothness',
                         'dynamic_degree', 'aesthetic_quality', 'imaging_quality', 'overall_consistency']
 
-        df[score_columns] = df[score_columns].apply(lambda x: (x - x.min()) / (x.max() - x.min()))
+        df_videos[score_columns] = df_videos[score_columns].apply(lambda x: (x - x.min()) / (x.max() - x.min()))
 
-        df['total_score'] = df[score_columns].sum(axis=1)
-        grouped = df.groupby(['prompt', 'image_url'])
+        df_videos['total_score'] = df_videos[score_columns].sum(axis=1)
+        grouped =df_videos.groupby(['prompt', 'image_url'])
 
         group_combinations = []
         for _, group in grouped:
@@ -378,7 +378,7 @@ def simulate_score(
 
 
     elif combinations_type == 'all':
-        grouped = df.groupby(['prompt', 'image_url'])
+        grouped = df_videos.groupby(['prompt', 'image_url'])
         for _, group in grouped:
             models_list = group['models'].unique()
             model_combinations = list(combinations(models_list, 2))
