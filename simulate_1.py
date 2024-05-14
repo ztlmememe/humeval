@@ -217,19 +217,22 @@ def submit_result(update_count,comparisons_by_dimension, count, rank_per_dimensi
 
 def get_videos(update_count,comparisons_by_dimension,all_combinations, count, begain_count,eval_status_per_dimension, model_strengths_per_dimension, current_group_index, groups_per_batch,decay_rate):
  
- 
+    n = 10  # 每组10个模型组合
+    size_of_group = groups_per_batch * n
+    total_groups = len(all_combinations) // size_of_group
+
+    # print(total_groups)
+    # print(current_group_index)
 
     # 检查是否所有维度都已有足够的数据，否则返回所有组合
     if len(comparisons_by_dimension[1]) < begain_count :
 
         # 在评分数据不足时返回所有可能的视频对组合 
-        return all_combinations[:begain_count]
+        return all_combinations[:begain_count], current_group_index
     else:
         
         # 评分数据足够后，按8*10*N划分组
-        n = 10  # 每组10个模型组合
-        size_of_group = groups_per_batch * n
-        total_groups = len(all_combinations) // size_of_group
+
         # print(total_groups)
 
         # 检查当前组索引是否超出范围，如果超出则重置
@@ -242,7 +245,7 @@ def get_videos(update_count,comparisons_by_dimension,all_combinations, count, be
         current_combinations = all_combinations[start_index:end_index]
         
         # 更新当前展示组数
-        current_group_index += 1
+        
 
         # 筛选视频对基于模型强度
         selected_combinations = []
@@ -261,10 +264,7 @@ def get_videos(update_count,comparisons_by_dimension,all_combinations, count, be
             if random.random() < probability_to_keep:
                 selected_combinations.append(combo_pair)
 
-
-
-
-        return selected_combinations
+        return selected_combinations,current_group_index
 
 import csv
 
@@ -325,7 +325,7 @@ def simulate_score(
 
     begain_count = begain_count # 测评多少开始动态评测
     # 200 # 测评多少开始动态评测
-    current_group_index = 0
+
     groups_per_batch =  groups_per_batch  # 每个BATCH的视频对数量，包括每个模型对 10
 
     update_count = groups_per_batch*M # 过M个BATCH更新一次模型强度
@@ -394,19 +394,22 @@ def simulate_score(
     final_score = {i: {} for i in range(1, 7)}  # 存储最终排名
     # 读取结果数据
     result_df = df_input
+    current_group_index = 0
 
 
 
     end = False
     count_num = 0
     while True:
-        combinations_now = get_videos(update_count,comparisons_by_dimension,all_combinations, count, begain_count,eval_status_per_dimension, model_strengths_per_dimension, current_group_index, groups_per_batch,decay_rate)
-        # print(f'combinations_now {len(combinations_now)}')
+        combinations_now,current_group_index = get_videos(update_count,comparisons_by_dimension,all_combinations, count, begain_count,eval_status_per_dimension, model_strengths_per_dimension, current_group_index, groups_per_batch,decay_rate)
+        # print(f'combinations_now {len(combinations_now)}') selected_combinations,current_group_index
+
 
         # 如果获取的视频对列表为空，结束循环
         if len(combinations_now) == 0:
             # print("No more video pairs to process.")
             break
+        current_group_index += 1
 
         # 初始化计数器
 
@@ -444,7 +447,7 @@ def simulate_score(
                 end,df_save = rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id, video_url_1, video_url_2, model_1, model_2, batch_rating, count_num)
                 if end:
                     break
-                
+
             if end:
                     break
         
