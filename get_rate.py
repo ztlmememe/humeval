@@ -25,7 +25,8 @@ def log_likelihood_rk(params, comparisons, model_names):
     # Log-likelihood for the Rao and Kupper model with ties
     param_dict = dict(zip(model_names, params[:-1]))
     tau = params[-1] # Threshold parameter for ties
-    theta = np.exp(tau)
+    # theta = np.exp(tau)
+    theta = tau
     # print(tau)
     epsilon = 1e-8 
     log_likelihood = 0
@@ -63,7 +64,8 @@ def fit_models(comparisons):
     initial_params = np.array([1.0] * len(models) + [0.5])  # tau for Rao-Kupper
     # print(initial_params)
     # 假设 \(\tau\) 的上限是 10,这里设置了每个参数的预估上下限，防止优化过程中出现很大的负值
-    bounds = [(0.01, None)] * len(models) + [(1e-8 , 10)]  # 对 \(\tau\) 设置0到10的范围，其他参数保持正常
+    bounds = [(0.01, None)] * len(models) + [(1 , 10)]  # 对 \(\tau\) 设置0到10的范围，其他参数保持正常
+    # Modified: 对theta设置1到10的范围
 
     # result_bt = minimize(log_likelihood_bt, x0=initial_params[:-1], args=(comparisons, models),
     # method='L-BFGS-B', bounds=bounds[:-1])
@@ -149,51 +151,51 @@ def calculate_naive_scores(comparisons):
 
 # 设置文件夹路径
 # folder_path = '/cpfs01/shared/public/ztl/NIPS/humeval/ori_data_before'
-folder_path = r'D:\pythonProject\humeval\amt_exp\humeval\ori_data_after'
-# 读取所有CSV文件并将它们合并成一个DataFrame
-dfs = []
-for file_name in os.listdir(folder_path):
-    if file_name.endswith('.csv'):
-        file_path = os.path.join(folder_path, file_name)
-        df = pd.read_csv(file_path)
-        dfs.append(df)
+# folder_path = r'D:\pythonProject\humeval\amt_exp\humeval\ori_data_after'
+# # 读取所有CSV文件并将它们合并成一个DataFrame
+# dfs = []
+# for file_name in os.listdir(folder_path):
+#     if file_name.endswith('.csv'):
+#         file_path = os.path.join(folder_path, file_name)
+#         df = pd.read_csv(file_path)
+#         dfs.append(df)
 
-# 合并DataFrame
-df = pd.concat(dfs, ignore_index=True)
+# # 合并DataFrame
+# df = pd.concat(dfs, ignore_index=True)
 
-# file_path = r'D:\pythonProject\humeval\amt_exp\humeval\ori_data_after\trained_data_4.csv'
+# # file_path = r'D:\pythonProject\humeval\amt_exp\humeval\ori_data_after\trained_data_4.csv'
 
-# df = pd.read_csv(file_path)
-
-
-# 初始化一个空字典用于存储每个dimension的DataFrame
-dimension_dfs = {}
+# # df = pd.read_csv(file_path)
 
 
-# 根据dimension分组并提取所需列
-for dimension, group_df in df.groupby('dimension'):
-    # print(dimension)
-    # if dimension != 5:
-    #     pass
-    # else:
+# # 初始化一个空字典用于存储每个dimension的DataFrame
+# dimension_dfs = {}
 
 
-        comparisons = group_df[['pairs_id', 'model_1', 'model_2', 'rating']].reset_index(drop=True)
+# # 根据dimension分组并提取所需列
+# for dimension, group_df in df.groupby('dimension'):
+#     # print(dimension)
+#     # if dimension != 5:
+#     #     pass
+#     # else:
 
 
-        scores_bt, scores_rk = fit_models(comparisons)
+#         comparisons = group_df[['pairs_id', 'model_1', 'model_2', 'rating']].reset_index(drop=True)
 
 
-        # 获取排名
-        # rankings_bt = rank_models(scores_bt)
-        rankings_rk = rank_models(scores_rk)
+#         scores_bt, scores_rk = fit_models(comparisons)
 
 
-        # 打印结果
-        # print(f"Dimension{dimension}: Bradley-Terry Model Rankings:", rankings_bt)
-        print(f"Dimension{dimension}: Rao and Kupper Model scores:", scores_rk)
+#         # 获取排名
+#         # rankings_bt = rank_models(scores_bt)
+#         rankings_rk = rank_models(scores_rk)
 
-        print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
+
+#         # 打印结果
+#         # print(f"Dimension{dimension}: Bradley-Terry Model Rankings:", rankings_bt)
+#         print(f"Dimension{dimension}: Rao and Kupper Model scores:", scores_rk)
+
+#         print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
 
 
     # scores_win = calculate_naive_scores(comparisons)
