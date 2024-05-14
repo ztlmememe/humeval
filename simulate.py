@@ -63,6 +63,7 @@ def log_likelihood_bt(params, comparisons, model_names):
         elif row['rating'] == 1:
             log_likelihood += np.log(pj / (pi + pj))
     return -log_likelihood
+
 def fit_models(comparisons):
 
 
@@ -137,10 +138,6 @@ def calculate_naive_scores(comparisons):
 # submit_result(pairs_id,video_url_1,video_url_2, model_1,model_2,ratings)
 def submit_result(pairs_id,video_url_1,video_url_2, model_1,model_2,ratings):
     global comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save
-
-
-        
-
 
     # 遍历每个评分项，更新对应维度的数据 
     for index, rating in ratings.iterrows():

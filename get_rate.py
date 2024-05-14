@@ -25,8 +25,7 @@ def log_likelihood_rk(params, comparisons, model_names):
     # Log-likelihood for the Rao and Kupper model with ties
     param_dict = dict(zip(model_names, params[:-1]))
     tau = params[-1] # Threshold parameter for ties
-    # theta = np.exp(tau)
-    theta = tau
+    theta = np.exp(tau)
     # print(tau)
     epsilon = 1e-8 
     log_likelihood = 0
