@@ -1,4 +1,3 @@
-
 import pandas as pd
 import statsmodels.api as sm
 import krippendorff
@@ -142,7 +141,7 @@ def calculate_naive_scores(comparisons):
     
     return scores
 
-# submit_result(pairs_id,video_url_1,video_url_2, model_1,model_2,ratings)
+
 def submit_result(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id,video_url_1,video_url_2, model_1,model_2,ratings):
 
 
@@ -218,24 +217,27 @@ def submit_result(update_count,comparisons_by_dimension, count, rank_per_dimensi
 
 def get_videos(update_count,comparisons_by_dimension,all_combinations, count, begain_count,eval_status_per_dimension, model_strengths_per_dimension, current_group_index, groups_per_batch,decay_rate):
  
- 
+    n = 10  # 每组10个模型组合
+    size_of_group = groups_per_batch * n
+    total_groups = len(all_combinations) // size_of_group
+
+    # print(total_groups)
+    # print(current_group_index)
 
     # 检查是否所有维度都已有足够的数据，否则返回所有组合
     if len(comparisons_by_dimension[1]) < begain_count :
 
         # 在评分数据不足时返回所有可能的视频对组合 
-        return all_combinations[:begain_count]
+        return all_combinations[:begain_count], current_group_index
     else:
         
         # 评分数据足够后，按8*10*N划分组
-        n = 10  # 每组10个模型组合
-        size_of_group = groups_per_batch * n
-        total_groups = len(all_combinations) // size_of_group
+
         # print(total_groups)
 
         # 检查当前组索引是否超出范围，如果超出则重置
         if current_group_index >= total_groups:
-            return []
+            return [],current_group_index
         
         # 获取当前批次的视频对
         start_index = current_group_index * size_of_group
@@ -243,7 +245,7 @@ def get_videos(update_count,comparisons_by_dimension,all_combinations, count, be
         current_combinations = all_combinations[start_index:end_index]
         
         # 更新当前展示组数
-        current_group_index += 1
+        
 
         # 筛选视频对基于模型强度
         selected_combinations = []
@@ -262,10 +264,7 @@ def get_videos(update_count,comparisons_by_dimension,all_combinations, count, be
             if random.random() < probability_to_keep:
                 selected_combinations.append(combo_pair)
 
-
-
-
-        return selected_combinations
+        return selected_combinations,current_group_index
 
 import csv
 
@@ -278,33 +277,15 @@ def rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_s
                 
     df_save,down = submit_result(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id,video_url_1,video_url_2, model_1,model_2,ratings)
 
-    if down:
-
-        print('The video evaluation is complete',f'completed_pairs {count_num}')
+    if down :
 
         return True,df_save
     else:
         # print('Rating received successfully')
         return False,df_save
 
-def simulate_score(
-    # csv_per_person = r'/cpfs01/shared/public/ztl/NIPS/amt/processed/batch99/data_for_0.csv',
-    #                 csv_videos = r'videos_all_with_result.csv',
-    #                 csv_save = r'videos_all_with_result.csv',
-                    df_input = None,df_videos= None,
-                    begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate = 0.3):
-
-
-    # parser = argparse.ArgumentParser(description='Example of a script that accepts hyperparameters.')
-    # parser.add_argument('--begain_count', type=int, default=200)
-    # parser.add_argument('--groups_per_batch', type=int, default=10) # 每一个BETCH过groups_per_batch*10个评分数据
-    # parser.add_argument('--M', type=int, default=5) # 过M个BATCH更新一次模型强度
-    # parser.add_argument('--N', type=int, default=5) # N次检查排名稳定后停止一个维度下的打分
-    # parser.add_argument('--decay_rate', type=float, default=0.1)
-    # parser.add_argument('--num', type=int, default=0) # 模拟第几个人,0-4 100 18:08开始
-
-
-    # args = parser.parse_args()
+def simulate_score(df_input = None,df_videos= None,
+                    begain_count = 200 ,groups_per_batch =7 ,M =5 ,N =5 ,decay_rate = 0.3):
 
     # 创建空的DataFrame
     df_save = pd.DataFrame(columns=['pairs_id', 'model_1', 'model_2', 'video_url_1', 'video_url_2', 'dimension', 'rating'])
@@ -326,7 +307,7 @@ def simulate_score(
 
     begain_count = begain_count # 测评多少开始动态评测
     # 200 # 测评多少开始动态评测
-    current_group_index = 0
+
     groups_per_batch =  groups_per_batch  # 每个BATCH的视频对数量，包括每个模型对 10
 
     update_count = groups_per_batch*M # 过M个BATCH更新一次模型强度
@@ -395,19 +376,22 @@ def simulate_score(
     final_score = {i: {} for i in range(1, 7)}  # 存储最终排名
     # 读取结果数据
     result_df = df_input
+    current_group_index = 0
 
 
 
     end = False
     count_num = 0
     while True:
-        combinations_now = get_videos(update_count,comparisons_by_dimension,all_combinations, count, begain_count,eval_status_per_dimension, model_strengths_per_dimension, current_group_index, groups_per_batch,decay_rate)
-        # print(f'combinations_now {len(combinations_now)}')
+        combinations_now,current_group_index = get_videos(update_count,comparisons_by_dimension,all_combinations, count, begain_count,eval_status_per_dimension, model_strengths_per_dimension, current_group_index, groups_per_batch,decay_rate)
+        # print(f'combinations_now {len(combinations_now)}') selected_combinations,current_group_index
+
 
         # 如果获取的视频对列表为空，结束循环
         if len(combinations_now) == 0:
             # print("No more video pairs to process.")
             break
+        current_group_index += 1
 
         # 初始化计数器
 
@@ -424,14 +408,30 @@ def simulate_score(
             ratings = result_df[(result_df['video_url_1'] == video_url_1) & (result_df['video_url_2'] == video_url_2)]
 
             # 打印查找到的评分信息
-            print(ratings)
+            # print(ratings)
 
-            count_num += 1
+            num_batches = len(ratings) // 6
+
+            # 对ratings中的每个六行批次进行迭代
+            for j in range(num_batches):
+                # 计算当前批次的索引范围
+                start_index = j * 6
+                end_index = start_index + 6
+                
+                # 使用iloc获取从start_index到end_index的六行数据
+                batch_rating = ratings.iloc[start_index:end_index]
+                # print(batch_rating)
+                
+
+                count_num += 1
             
             # 调用 rate 函数处理评分数据
-            end,df_save = rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id, video_url_1, video_url_2, model_1, model_2, ratings, count_num)
+                end,df_save = rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_status_per_dimension, model_strengths_per_dimension, df_save,final_ranking,final_score,N,pairs_id, video_url_1, video_url_2, model_1, model_2, batch_rating, count_num)
+                if end:
+                    break
+
             if end:
-                break
+                    break
         
         if len(combinations_now) == 2000:
             break
@@ -441,7 +441,7 @@ def simulate_score(
         if end:
             break
                 
-
+    print('The video evaluation is complete',f'completed_pairs {count_num}')       
     dimension_dfs = {}
     
     # 根据dimension分组并提取所需列
@@ -460,58 +460,29 @@ def simulate_score(
 
         dimension_dfs[dimension] = scores_rk
 
-        print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
+        # print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
 
-    return dimension_dfs
+    return df_save, dimension_dfs
 
 
 
 import time
 
 
-def simulate_all(
-    # path_csv_per_person = r'/mnt/workspace/ztl/NIPS/amt/processed/batch100',
-    #                 csv_videos = r'videos_all_with_result.csv',
-    #                 path_csv_save = r'/cpfs01/shared/public/ztl/NIPS/humeval/simulate_amt/',
-                    df_inputs,df_videos,begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate =0.3):
+def simulate_all(df_inputs,df_videos,begain_count = 200 ,groups_per_batch =7 ,M =5 ,N =5 ,decay_rate =0.3):
 
 
     i = 0
-    # timestamp = time.time()
-    # folder_path = os.path.join(path_csv_save,str(timestamp))
-
-    # if not os.path.exists(folder_path ):
-    #     os.makedirs(folder_path)
-        # print("Folder created")
 
     dfs = []
 
-    # for file in os.listdir(path_csv_per_person):
     for df_input  in df_inputs:
-        # if file.endswith(".csv"):
-            
-            # csv_per_person = os.path.join(path_csv_per_person, file)
-            # file_names = f'{i}_{begain_count}_{groups_per_batch}_{M}_{N}_{decay_rate}.csv'
-            # csv_save = os.path.join(path_csv_save,str(timestamp), file_names)
 
-            # df_input  = pd.read_csv(csv_videos)
+        df_save, dimension_dfs = simulate_score(df_input,df_videos,begain_count,groups_per_batch,M,N,decay_rate)
 
-            # df_input['image_url'].fillna(0, inplace=True)
-            
+        dfs.append(df_save)
 
-            df_save, dimension_dfs = simulate_score(df_input,df_videos,begain_count,groups_per_batch,M,N,decay_rate)
-
-            dfs.append(df_save)
-
-            i += 1
-
-    # 读取所有CSV文件并将它们合并成一个DataFrame
-    
-    # for file_name in os.listdir(folder_path):
-    #     if file_name.endswith('.csv'):
-    #         file_path = os.path.join(folder_path, file_name)
-    #         df = pd.read_csv(file_path)
-    #         dfs.append(df)
+        i += 1
 
     # 合并DataFrame
     df = pd.concat(dfs, ignore_index=True)
@@ -525,22 +496,16 @@ def simulate_all(
 
         comparisons = group_df[['pairs_id', 'model_1', 'model_2', 'rating']].reset_index(drop=True)
 
-
         scores_rk = fit_models(comparisons)
 
-
-        # 获取排名
-        # rankings_bt = rank_models(scores_bt)
         rankings_rk = rank_models(scores_rk)
 
         dimension_dfs[dimension] = scores_rk
 
-
-        # 打印结果
-        # print(f"Dimension{dimension}: Bradley-Terry Model Rankings:", rankings_bt)
-        # print(f"Dimension{dimension}: Rao and Kupper Model scores:", scores_rk)
-
         print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
+
+
+        print(f"Dimension{dimension}: Rao and Kupper Model Scores:", scores_rk)
 
     return dimension_dfs
 
