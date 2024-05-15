@@ -285,7 +285,7 @@ def rate(update_count,comparisons_by_dimension, count, rank_per_dimension,eval_s
         return False,df_save
 
 def simulate_score(df_input = None,df_videos= None,
-                    begain_count = 200 ,groups_per_batch =7 ,M =5 ,N =5 ,decay_rate = 0.3):
+                    begain_count = 200 ,groups_per_batch =8 ,M =5 ,N =5 ,decay_rate = 0.3):
 
     # 创建空的DataFrame
     df_save = pd.DataFrame(columns=['pairs_id', 'model_1', 'model_2', 'video_url_1', 'video_url_2', 'dimension', 'rating'])
@@ -469,7 +469,7 @@ def simulate_score(df_input = None,df_videos= None,
 import time
 
 
-def simulate_all(df_inputs,df_videos,begain_count = 200 ,groups_per_batch =10 ,M =5 ,N =5 ,decay_rate =0.3):
+def simulate_all(df_inputs,df_videos,begain_count = 200 ,groups_per_batch =8 ,M =5 ,N =5 ,decay_rate =0.3):
 
 
     i = 0
@@ -503,6 +503,9 @@ def simulate_all(df_inputs,df_videos,begain_count = 200 ,groups_per_batch =10 ,M
         dimension_dfs[dimension] = scores_rk
 
         print(f"Dimension{dimension}: Rao and Kupper Model Rankings:", rankings_rk)
+
+
+        print(f"Dimension{dimension}: Rao and Kupper Model Scores:", scores_rk)
 
     return dimension_dfs
 
