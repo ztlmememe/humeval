@@ -12,6 +12,7 @@ simulate.py：模拟动态评测算法
 输出：dimension_dfs，一个包含每个维度下模型评分的字典
 
 使用示例：
+```python
 from simulate_1 import simulate_all
 from simulate_1 import simulate_score
 import argparse
@@ -46,7 +47,7 @@ for file in os.listdir(path_csv_per_person):
         df_inputs.append(df_input)
 
 simulate_all(df_inputs,df_videos,begain_count = args.begain_count ,groups_per_batch =args.groups_per_batch ,M =args.M ,N =args.N ,decay_rate =args.decay_rate)
-
+```
 相关参数：
 
 
