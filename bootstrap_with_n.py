@@ -38,7 +38,7 @@ all_data_merged = pd.merge(all_data, videos[['video_url', 'prompt']],
                            how='left')
 
 # Constants
-G = 100
+G = 1000
 dimension_names = {
     1: "Video Quality",
     2: "Temporal Quality",
