@@ -70,7 +70,6 @@ def fit_models(comparisons):
     # method='L-BFGS-B', bounds=bounds[:-1])
     
     # scores_bt = dict(zip(models, result_bt.x))
-    scores_bt = None
     
     # Fit Rao and Kupper model
     result_rk = minimize(log_likelihood_rk, x0=initial_params, args=(comparisons, models),
@@ -84,7 +83,7 @@ def fit_models(comparisons):
     #                     #  method='BFGS')
     # scores_bs = dict(zip(models, result_bs.x))
     
-    return scores_bt, scores_rk
+    return scores_rk
 
 def rank_models(scores):
     # 将得分字典转换为可排序的元组列表
