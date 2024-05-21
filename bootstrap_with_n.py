@@ -38,7 +38,7 @@ all_data_merged = pd.merge(all_data, videos[['video_url', 'prompt']],
                            how='left')
 
 # Constants
-G = 1000
+G = 10
 dimension_names = {
     1: "Video Quality",
     2: "Temporal Quality",
@@ -53,7 +53,7 @@ column_names = ['Latte', 'Pika', 'TF-T2V', 'Gen2', 'Videocrafter2']
 bs_result_with_n = pd.DataFrame()
 
 # Sample sizes
-nums = list(range(10, 210, 20))
+nums = list(range(20, 210, 20))
 
 # Unique prompts
 all_prompts = all_data_merged['prompt'].unique()
@@ -61,6 +61,8 @@ all_prompts = all_data_merged['prompt'].unique()
 if __name__ == '__main__':
 
     for n in nums:
+        print(f'Bootstrapping for n={n} started.')
+        
         prompts = np.random.choice(all_prompts, n, replace=False)
         sub_data = all_data_merged[all_data_merged['prompt'].isin(prompts)]
         
@@ -73,8 +75,8 @@ if __name__ == '__main__':
         # Initialize a list of empty DataFrames for each dimension
         result_df_list = [pd.DataFrame(columns=column_names) for _ in range(6)]
         
-        print(type(results))
-        print(results)
+        # print(type(results))
+        # print(results)
         
         # Accumulate results
         for result in results:
